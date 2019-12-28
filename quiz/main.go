@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 // Problem struct works as a proxy for a CSV row.
@@ -30,11 +31,12 @@ func ParseCSV(rows [][]string) []Problem {
 
 func main() {
 	filenamePtr := flag.String("csv", "problems.csv", "a csv file with ques,ans")
-	// timeLimitPtr := flag.Int("tlimit", 30, "time limit after which quiz will end")
+	timeLimitPtr := flag.Int("tlimit", 30, "time limit after which quiz will end")
 	flag.Parse()
 
 	csvFile, err := os.Open(*filenamePtr)
 	handleError(err)
+	timer := time.NewTimer(time.Duration(*timeLimitPtr) * time.Second)
 
 	defer csvFile.Close()
 
@@ -45,17 +47,25 @@ func main() {
 	problems := ParseCSV(rows)
 	correct := 0
 
-	for _, problem := range problems {
-		fmt.Printf("What is %s? ", problem.question)
-		var response string
-		fmt.Scanln(&response)
-
-		if response == problem.answer {
-			correct++
+	for i, problem := range problems {
+		fmt.Printf("Problem #%d: %s = ", i+1, problem.question)
+		answerChannel := make(chan string)
+		go func() {
+			var response string
+			fmt.Scanln(&response)
+			answerChannel <- response
+		}()
+		select {
+		case <-timer.C:
+			fmt.Printf("\n%d answers correct of %d questions.\n", correct, len(problems))
+			return
+		case response := <-answerChannel:
+			if response == problem.answer {
+				correct++
+			}
 		}
 	}
-
-	fmt.Printf("%d answers correct out of %d questions.\n", correct, len(problems))
+	fmt.Printf("\n%d answers correct of %d questions.\n", correct, len(problems))
 }
 
 func handleError(err error) {
