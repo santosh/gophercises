@@ -9,15 +9,18 @@ import (
 	"strings"
 )
 
-type problem struct {
+// Problem struct works as a proxy for a CSV row.
+type Problem struct {
 	question string
 	answer   string
 }
 
-func parseCSV(rows [][]string) []problem {
-	problems := make([]problem, len(rows))
+// ParseCSV takes a two column csv one having question and other answer
+// and cast into Problem struct
+func ParseCSV(rows [][]string) []Problem {
+	problems := make([]Problem, len(rows))
 	for i, row := range rows {
-		problems[i] = problem{
+		problems[i] = Problem{
 			question: row[0],
 			answer:   strings.TrimSpace(row[1]),
 		}
@@ -39,7 +42,7 @@ func main() {
 	rows, err := csvReader.ReadAll()
 	handleError(err)
 
-	problems := parseCSV(rows)
+	problems := ParseCSV(rows)
 	correct := 0
 
 	for _, problem := range problems {
