@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -35,14 +34,18 @@ func main() {
 	flag.Parse()
 
 	csvFile, err := os.Open(*filenamePtr)
-	handleError(err)
+	if err != nil {
+		exit(fmt.Sprintf("Failed to open the CSV file: %s\n", *filenamePtr))
+	}
 	timer := time.NewTimer(time.Duration(*timeLimitPtr) * time.Second)
 
 	defer csvFile.Close()
 
 	csvReader := csv.NewReader(csvFile)
 	rows, err := csvReader.ReadAll()
-	handleError(err)
+	if err != nil {
+		exit("Failed to parse the provided CSV file: %s\n")
+	}
 
 	problems := ParseCSV(rows)
 	correct := 0
@@ -68,8 +71,7 @@ func main() {
 	fmt.Printf("\n%d answers correct of %d questions.\n", correct, len(problems))
 }
 
-func handleError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
+func exit(msg string) {
+	fmt.Println(msg)
+	os.Exit(1)
 }

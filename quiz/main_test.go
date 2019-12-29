@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+// TODO: Remove repetitive code.
+
 func TestParseCSVLen(t *testing.T) {
 	csvData := strings.NewReader(strings.Join([]string{
 		`20+1,21`,
