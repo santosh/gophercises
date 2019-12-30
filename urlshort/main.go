@@ -1,11 +1,30 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 )
 
+// TODO: Keep provided yaml as fallback.
+
+func getContent(fp string) (yamlContent []byte) {
+	if fp != "" {
+		yamlContent, err := ioutil.ReadFile(fp)
+		if err != nil {
+			exit(fmt.Sprintf("Failed to open the YAML file: %s\n", fp))
+		}
+		return yamlContent
+	}
+	return
+}
+
 func main() {
+	yamlFilePtr := flag.String("yaml", "", "yaml file to be used")
+	flag.Parse()
+
 	mux := defaultMux()
 
 	// Build the MapHandler using the mux as the fallback
@@ -16,17 +35,11 @@ func main() {
 	}
 	mapHandler := MapHandler(pathsToUrls, mux)
 
+	yamlContent := getContent(*yamlFilePtr)
+
 	// Build the YAMLHandler using the mapHandler as the
 	// fallback
-	yaml := `
-- path: /urlshort
-  url: https://github.com/gophercises/urlshort
-- path: /urlshort-final
-  url: https://github.com/gophercises/urlshort/tree/solution
-- path: /pune-rocket
-  url: http://rocket.methodstudios.com/
-`
-	yamlHandler, err := YAMLHandler([]byte(yaml), mapHandler)
+	yamlHandler, err := YAMLHandler([]byte(yamlContent), mapHandler)
 	if err != nil {
 		panic(err)
 	}
@@ -42,4 +55,9 @@ func defaultMux() *http.ServeMux {
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, world!")
+}
+
+func exit(msg string) {
+	fmt.Println(msg)
+	os.Exit(1)
 }
