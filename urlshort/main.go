@@ -1,30 +1,38 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/akamensky/argparse"
 )
 
-// TODO: Keep provided yaml as fallback.
-
 func getContent(fp string) (yamlContent []byte) {
-	if fp != "" {
-		yamlContent, err := ioutil.ReadFile(fp)
-		if err != nil {
-			exit(fmt.Sprintf("Failed to open the YAML file: %s\n", fp))
-		}
-		return yamlContent
+	if fp == "" {
+		fp = "urls.yaml"
+	}
+
+	yamlContent, err := ioutil.ReadFile(fp)
+	if err != nil {
+		exit(fmt.Sprintf("Failed to open the YAML file: %s\n", fp))
 	}
 	return
 }
 
-func main() {
-	yamlFilePtr := flag.String("yaml", "", "yaml file to be used")
-	flag.Parse()
+var yamlFlag *string
 
+func init() {
+	parser := argparse.NewParser("urlshort", "URL Shortener with multiple data backstores.")
+	yamlFlag = parser.String("y", "yaml", &argparse.Options{Required: false, Help: "YAML file to be used"})
+	err := parser.Parse(os.Args)
+	if err != nil {
+		fmt.Print(parser.Usage(err))
+	}
+}
+
+func main() {
 	mux := defaultMux()
 
 	// Build the MapHandler using the mux as the fallback
@@ -35,7 +43,7 @@ func main() {
 	}
 	mapHandler := MapHandler(pathsToUrls, mux)
 
-	yamlContent := getContent(*yamlFilePtr)
+	yamlContent := getContent(*yamlFlag)
 
 	// Build the YAMLHandler using the mapHandler as the
 	// fallback
