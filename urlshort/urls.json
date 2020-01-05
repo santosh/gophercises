@@ -1,0 +1,10 @@
+[
+    {
+        "path": "/example",
+        "url": "https://www.example.com"
+    },
+    {
+        "path": "/json",
+        "url": "https://en.wikipedia.org/wiki/JSON"
+    }
+]

@@ -9,7 +9,7 @@ import (
 	"github.com/akamensky/argparse"
 )
 
-func getContent(fp string) (yamlContent []byte) {
+func getYAMLContent(fp string) (yamlContent []byte) {
 	if fp == "" {
 		fp = "urls.yaml"
 	}
@@ -21,11 +21,27 @@ func getContent(fp string) (yamlContent []byte) {
 	return
 }
 
-var yamlFlag *string
+func getJSONContent(fp string) (jsonContent []byte) {
+	if fp == "" {
+		fp = "urls.json"
+	}
+
+	jsonContent, err := ioutil.ReadFile(fp)
+	if err != nil {
+		exit(fmt.Sprintf("Failed to open the JSON file: %s\n", fp))
+	}
+	return
+}
+
+var yamlFlag, jsonFlag *string
 
 func init() {
 	parser := argparse.NewParser("urlshort", "URL Shortener with multiple data backstores.")
+
+	// TODO: Make all the data backstori mutually exclusive
 	yamlFlag = parser.String("y", "yaml", &argparse.Options{Required: false, Help: "YAML file to be used"})
+	jsonFlag = parser.String("j", "json", &argparse.Options{Required: false, Help: "JSON file to be used"})
+
 	err := parser.Parse(os.Args)
 	if err != nil {
 		fmt.Print(parser.Usage(err))
@@ -43,7 +59,7 @@ func main() {
 	}
 	mapHandler := MapHandler(pathsToUrls, mux)
 
-	yamlContent := getContent(*yamlFlag)
+	yamlContent := getYAMLContent(*yamlFlag)
 
 	// Build the YAMLHandler using the mapHandler as the
 	// fallback
@@ -51,8 +67,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	jsonContent := getJSONContent(*jsonFlag)
+
+	jsonHandler, err := JSONHandler([]byte(jsonContent), yamlHandler)
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println("Starting the server on http://localhost:8080")
-	http.ListenAndServe(":8080", yamlHandler)
+	http.ListenAndServe(":8080", jsonHandler)
 }
 
 func defaultMux() *http.ServeMux {
