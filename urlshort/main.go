@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/akamensky/argparse"
+	"github.com/boltdb/bolt"
 )
 
 func getYAMLContent(fp string) (yamlContent []byte) {
@@ -33,14 +35,14 @@ func getJSONContent(fp string) (jsonContent []byte) {
 	return
 }
 
-var yamlFlag, jsonFlag *string
+var yamlFlag, jsonFlag, boltFlag *string
 
 func init() {
 	parser := argparse.NewParser("urlshort", "URL Shortener with multiple data backstores.")
 
-	// TODO: Make all the data backstori mutually exclusive
 	yamlFlag = parser.String("y", "yaml", &argparse.Options{Required: false, Help: "YAML file to be used"})
 	jsonFlag = parser.String("j", "json", &argparse.Options{Required: false, Help: "JSON file to be used"})
+	boltFlag = parser.String("b", "bolt", &argparse.Options{Required: false, Help: "BoltDB file to be used"})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -74,8 +76,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	db, err := bolt.Open(*boltFlag, 0644, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	boltHandler := BoltHandler(db, jsonHandler)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println("Starting the server on http://localhost:8080")
-	http.ListenAndServe(":8080", jsonHandler)
+	http.ListenAndServe(":8080", boltHandler)
 }
 
 func defaultMux() *http.ServeMux {

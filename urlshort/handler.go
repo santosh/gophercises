@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/boltdb/bolt"
 	"gopkg.in/yaml.v2"
 )
 
@@ -91,4 +93,33 @@ func JSONHandler(jsonContent []byte, fallback http.Handler) (http.HandlerFunc, e
 		pathsToUrls[entry.Path] = entry.URL
 	}
 	return MapHandler(pathsToUrls, fallback), nil
+}
+
+var redirects = []byte("redirects")
+
+// BoltHandler pulls out key, vaule from the passed BoltDB file.
+func BoltHandler(db *bolt.DB, fallback http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var url string
+		err := db.View(func(tx *bolt.Tx) error {
+			bucket := tx.Bucket(redirects)
+			if bucket == nil {
+				return fmt.Errorf("Bucket %q not found", redirects)
+			}
+
+			value := bucket.Get([]byte(r.URL.Path))
+			if value != nil {
+				url = string(value)
+			}
+
+			return nil
+		})
+
+		if err == nil && url != "" {
+			log.Println("Matched:", url)
+			http.Redirect(w, r, url, http.StatusFound)
+		}
+
+		fallback.ServeHTTP(w, r)
+	}
 }
