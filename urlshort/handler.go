@@ -32,6 +32,24 @@ type Pair struct {
 	URL  string `yaml:"url" json:"url"`
 }
 
+func buidMap(pairs []Pair) map[string]string {
+	pathsToUrls := make(map[string]string)
+	for _, entry := range pairs {
+		pathsToUrls[entry.Path] = entry.URL
+	}
+	return pathsToUrls
+}
+
+func parseYAML(yamlBytes []byte) ([]Pair, error) {
+	var pairs []Pair
+
+	err := yaml.Unmarshal(yamlBytes, &pairs)
+	if err != nil {
+		return nil, err
+	}
+	return pairs, nil
+}
+
 // YAMLHandler parses the provided YAML and then return
 // an http.HandlerFunc (which also implements http.Handler)
 // that will attempt to map any paths to their corresponding
@@ -48,19 +66,24 @@ type Pair struct {
 //
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
-func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	var pairs []Pair
-	err := yaml.Unmarshal(yml, &pairs)
+func YAMLHandler(yamlBytes []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedYAML, err := parseYAML(yamlBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	pathsToUrls := make(map[string]string, len(pairs))
-
-	for _, entry := range pairs {
-		pathsToUrls[entry.Path] = entry.URL
-	}
+	pathsToUrls := buidMap(parsedYAML)
 	return MapHandler(pathsToUrls, fallback), nil
+}
+
+func parseJSON(jsonBytes []byte) ([]Pair, error) {
+	var pairs []Pair
+
+	err := json.Unmarshal(jsonBytes, &pairs)
+	if err != nil {
+		return nil, err
+	}
+	return pairs, nil
 }
 
 // JSONHandler parses the provided JSON and then return
@@ -81,17 +104,13 @@ func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 //
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
-func JSONHandler(jsonContent []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	var pairs []Pair
-	err := json.Unmarshal(jsonContent, &pairs)
+func JSONHandler(jsonBytes []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedJSON, err := parseJSON(jsonBytes)
 	if err != nil {
 		return nil, err
 	}
-	pathsToUrls := make(map[string]string, len(pairs))
+	pathsToUrls := buidMap(parsedJSON)
 
-	for _, entry := range pairs {
-		pathsToUrls[entry.Path] = entry.URL
-	}
 	return MapHandler(pathsToUrls, fallback), nil
 }
 

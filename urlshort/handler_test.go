@@ -1,7 +1,7 @@
 package main
 
-// Break the handler into small parts to unittest
+// Test for parseYAML - Should load YAML data
 
-// Test for parseYaml - Should load yaml data
+// Test for parseJSON - Should load JSON data
 
 // Test for buildMap - should return path map (which MapHandler accepts) from yaml data
