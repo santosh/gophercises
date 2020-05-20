@@ -1,3 +1,4 @@
 quiz/quiz
 urlshort/urlshort
 *.db
+.env
