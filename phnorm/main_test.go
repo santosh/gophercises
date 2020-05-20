@@ -18,7 +18,7 @@ func TestNormalize(t *testing.T) {
 		t.Run(tc.input, func(t *testing.T) {
 			actual := normalize(tc.input)
 			if actual != tc.want {
-				t.Errorf("get %q; want %q", actual, tc.want)
+				t.Errorf("got %q; want %q", actual, tc.want)
 			}
 		})
 	}
