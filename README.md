@@ -31,3 +31,7 @@ Solves Camel Problem and Cipler Problem from HackerRank. The idea was to use ser
 ## Task Manager
 
 Task manager is separately uploaded to <https://gitlab.com/sntshk/task>
+
+## Phone Number Normalizer
+
+This lesson is designed in a way to teach interaction with SQL databases in Go.
