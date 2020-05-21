@@ -125,7 +125,7 @@ func getPhone(db *sql.DB, id int) (string, error) {
 
 func findPhone(db *sql.DB, number string) (*phone, error) {
 	var p phone
-	row := db.QueryRow("SELECT value FROM phone_numbers WHERE id=$1", number)
+	row := db.QueryRow("SELECT * FROM phone_numbers WHERE value=$1", number)
 	err := row.Scan(&p.id, &p.number)
 	if err != nil {
 		if err == sql.ErrNoRows {
