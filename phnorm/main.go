@@ -28,9 +28,9 @@ func main() {
 	db, err := sql.Open("postgres", psqlInfo)
 	must(err)
 
-	// err = resetDB(db, dbname)
-	// must(err)
-	// db.Close()
+	err = resetDB(db, dbname)
+	must(err)
+	db.Close()
 
 	psqlInfo = fmt.Sprintf("%s dbname=%s", psqlInfo, dbname)
 	db, err = sql.Open("postgres", psqlInfo)
@@ -61,6 +61,41 @@ func main() {
 	number, err := getPhone(db, id)
 	must(err)
 	fmt.Println("Number is...", number)
+
+	phones, err := getAllPhones(db)
+	must(err)
+	for _, p := range phones {
+		fmt.Printf("%+v\n", p)
+	}
+}
+
+type phone struct {
+	id     int
+	number string
+}
+
+func getAllPhones(db *sql.DB) ([]phone, error) {
+	rows, err := db.Query("SELECT id, value FROM phone_numbers")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var numbers []phone
+
+	for rows.Next() {
+		var p phone
+		if err := rows.Scan(&p.id, &p.number); err != nil {
+			return nil, err
+		}
+		numbers = append(numbers, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return numbers, nil
 }
 
 func getPhone(db *sql.DB, id int) (string, error) {
