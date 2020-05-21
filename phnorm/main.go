@@ -48,6 +48,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	createPhoneNumbersTable(db)
+}
+
+func createPhoneNumbersTable(db *sql.DB) error {
+	statement := `
+		CREATE TABLE IF NOT EXISTS phone_numbers (
+			id SERIAL,
+			value VARCHAR(255)
+		)`
+
+	_, err := db.Exec(statement)
+	return err
 }
 
 func resetDB(db *sql.DB, name string) error {
