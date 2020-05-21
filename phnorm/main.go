@@ -71,9 +71,11 @@ func main() {
 			existing, err := findPhone(db, number)
 			must(err)
 			if existing != nil {
-				// delete
+				// delete row
 			} else {
-				// update
+				// update row
+				p.number = number
+				must(updatePhone(db, p))
 			}
 		} else {
 			fmt.Println("No changes required")
@@ -134,6 +136,12 @@ func findPhone(db *sql.DB, number string) (*phone, error) {
 	}
 
 	return &p, nil
+}
+
+func updatePhone(db *sql.DB, p phone) error {
+	statement := `UPDATE phone_numbers SET value=$2 WHERE id=$1`
+	_, err := db.Exec(statement, p.id, p.number)
+	return err
 }
 
 func insertPhone(db *sql.DB, phone string) (int, error) {
