@@ -68,12 +68,12 @@ func main() {
 		fmt.Printf("Working on... %+v\n", p)
 		number := normalize(p.number)
 		if number != p.number {
+			fmt.Println("Updating or removing...", number)
 			existing, err := findPhone(db, number)
 			must(err)
 			if existing != nil {
-				// delete row
+				must(deletePhone(db, p.id))
 			} else {
-				// update row
 				p.number = number
 				must(updatePhone(db, p))
 			}
@@ -141,6 +141,12 @@ func findPhone(db *sql.DB, number string) (*phone, error) {
 func updatePhone(db *sql.DB, p phone) error {
 	statement := `UPDATE phone_numbers SET value=$2 WHERE id=$1`
 	_, err := db.Exec(statement, p.id, p.number)
+	return err
+}
+
+func deletePhone(db *sql.DB, id int) error {
+	statement := `DELETE FROM phone_numbers WHERE id=$1`
+	_, err := db.Exec(statement, id)
 	return err
 }
 
