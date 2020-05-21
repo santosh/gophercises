@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/santosh/gophercises/phnorm/db"
 )
 
 func init() {
@@ -25,15 +26,10 @@ func main() {
 	password := os.Getenv("PASSWORD")
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable", host, port, username, password)
-	db, err := sql.Open("postgres", psqlInfo)
-	must(err)
-
-	err = resetDB(db, dbname)
-	must(err)
-	db.Close()
+	must(db.Reset("postgres", psqlInfo, dbname))
 
 	psqlInfo = fmt.Sprintf("%s dbname=%s", psqlInfo, dbname)
-	db, err = sql.Open("postgres", psqlInfo)
+	db, err := sql.Open("postgres", psqlInfo)
 
 	defer db.Close()
 
@@ -169,20 +165,6 @@ func createPhoneNumbersTable(db *sql.DB) error {
 
 	_, err := db.Exec(statement)
 	return err
-}
-
-func resetDB(db *sql.DB, name string) error {
-	_, err := db.Exec("DROP DATABASE IF EXISTS " + name)
-	must(err)
-
-	return createDB(db, name)
-}
-
-func createDB(db *sql.DB, name string) error {
-	_, err := db.Exec("CREATE DATABASE " + name)
-	must(err)
-
-	return nil
 }
 
 func must(err error) {
