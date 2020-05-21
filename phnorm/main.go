@@ -11,10 +11,7 @@ import (
 )
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	must(godotenv.Load())
 }
 
 const (
@@ -29,14 +26,10 @@ func main() {
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable", host, port, username, password)
 	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
-	}
+	must(err)
 
 	// err = resetDB(db, dbname)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	// must(err)
 	// db.Close()
 
 	psqlInfo = fmt.Sprintf("%s dbname=%s", psqlInfo, dbname)
@@ -44,10 +37,7 @@ func main() {
 
 	defer db.Close()
 
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
+	must(db.Ping())
 
 	createPhoneNumbersTable(db)
 	id, err := insertPhone(db, "123456789")
@@ -77,20 +67,22 @@ func createPhoneNumbersTable(db *sql.DB) error {
 
 func resetDB(db *sql.DB, name string) error {
 	_, err := db.Exec("DROP DATABASE IF EXISTS " + name)
-	if err != nil {
-		return err
-	}
+	must(err)
 
 	return createDB(db, name)
 }
 
 func createDB(db *sql.DB, name string) error {
 	_, err := db.Exec("CREATE DATABASE " + name)
-	if err != nil {
-		return err
-	}
+	must(err)
 
 	return nil
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 func normalize(phone string) string {
