@@ -40,8 +40,23 @@ func main() {
 	must(db.Ping())
 
 	createPhoneNumbersTable(db)
-	id, err := insertPhone(db, "123456789")
-	fmt.Println("id=", id)
+
+	_, err = insertPhone(db, "1234567890")
+	must(err)
+	_, err = insertPhone(db, "123 456 7891")
+	must(err)
+	_, err = insertPhone(db, "(123) 456 7892")
+	must(err)
+	_, err = insertPhone(db, "(123) 456-7893")
+	must(err)
+	_, err = insertPhone(db, "123-456-7894")
+	must(err)
+	_, err = insertPhone(db, "123-456-7890")
+	must(err)
+	_, err = insertPhone(db, "1234567892")
+	must(err)
+	_, err = insertPhone(db, "(123)456-7892")
+	must(err)
 }
 
 func insertPhone(db *sql.DB, phone string) (int, error) {
