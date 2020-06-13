@@ -35,3 +35,8 @@ Task manager is separately uploaded to <https://gitlab.com/sntshk/task>
 ## Phone Number Normalizer
 
 This lesson is designed in a way to teach interaction with SQL databases in Go.
+Uses Postgres with <https://github.com/lib/pq>.
+
+## Deck of Cards
+
+The `deck` package, which will be used in future card game exercises. Implements Suit, Rank and Card types.
