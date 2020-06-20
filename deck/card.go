@@ -63,7 +63,7 @@ func (c Card) String() string {
 
 // New creates new deck of cards with a total of
 // 13 (ranks) * 4 (suits). Joker is not included.
-func New() []Card {
+func New(opts ...func([]Card) []Card) []Card {
 	var cards []Card
 	for _, suit := range suits {
 		for rank := minRank; rank <= maxRank; rank++ {
@@ -71,6 +71,14 @@ func New() []Card {
 		}
 	}
 
+	// This is completely different from how we would have done it in Python.
+	// Here we are taking input, and taking options, and passing the
+	// input to all the functions which takes cards
+	for _, opt := range opts {
+		cards = opt(cards)
+	}
+	return cards
+}
 
 // DefaultSort sorts in a manner like:
 // Spade, Ace - King
