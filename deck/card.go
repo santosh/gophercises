@@ -13,9 +13,11 @@ const (
 	Diamond
 	Club
 	Heart
+	// Joker is a special case and has no Suit, but we'll treat it as Suit.
 	Joker
 )
 
+// To compensate for Joker, suits pools only real Suits
 var suits = [...]Suit{Spade, Diamond, Club, Heart}
 
 // Rank represents a single value of card between A, 2, ..., Q, K

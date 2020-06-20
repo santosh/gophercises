@@ -11,6 +11,7 @@ func ExampleCard() {
 	fmt.Println(Card{Rank: Jack, Suit: Club})
 	fmt.Println(Card{Rank: Queen, Suit: Diamond})
 	fmt.Println(Card{Rank: King, Suit: Spade})
+	fmt.Println(Card{Suit: Joker})
 
 	// Output:
 	// Ace of Hearts
@@ -18,6 +19,7 @@ func ExampleCard() {
 	// Jack of Clubs
 	// Queen of Diamonds
 	// King of Spades
+	// Joker
 }
 
 func TestNew(t *testing.T) {
