@@ -3,7 +3,10 @@
 // Package deck provides API for a representation of cards. A Card has a Suit and a Rank.
 package deck
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 // Suit represents card's category.
 type Suit uint8
@@ -68,5 +71,25 @@ func New() []Card {
 		}
 	}
 
+
+// DefaultSort sorts in a manner like:
+// Spade, Ace - King
+// Diamond, Ace - King
+// Club, Ace - King
+// Heart, Ace - King
+func DefaultSort(cards []Card) []Card {
+	sort.Slice(cards, Less(cards))
 	return cards
+}
+
+// Less matches the the signature for https://golang.org/pkg/sort/#Slice
+func Less(cards []Card) func(i, j int) bool {
+	return func(i, j int) bool {
+		return absRank(cards[i]) < absRank(cards[j])
+	}
+}
+
+// absRank returns absolute rank of a card.
+func absRank(c Card) int {
+	return int(c.Suit)*int(maxRank) + int(c.Rank)
 }
