@@ -114,6 +114,20 @@ func TestJokers(t *testing.T) {
 		}
 	}
 	if got != noWant {
-		t.Errorf("expected %d Jokers, got %d", noWant, got)
+		t.Errorf("Expected %d Jokers, got %d", noWant, got)
+	}
+}
+
+func TestFilter(t *testing.T) {
+	filter := func(card Card) bool {
+		return card.Rank == 2 || card.Rank == 3
+	}
+
+	cards := New(Filter(filter))
+
+	for _, c := range cards {
+		if c.Rank == 2 || c.Rank == 3 {
+			t.Error("Expected all 2s & 3s to be filtered out.")
+		}
 	}
 }
