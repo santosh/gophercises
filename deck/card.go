@@ -90,6 +90,14 @@ func DefaultSort(cards []Card) []Card {
 	return cards
 }
 
+// Sort takes a less function
+func Sort(less func(cards []Card) func(i, j int) bool) func([]Card) []Card {
+	return func(cards []Card) []Card {
+		sort.Slice(cards, less(cards))
+		return cards
+	}
+}
+
 // Less matches the the signature for https://golang.org/pkg/sort/#Slice
 func Less(cards []Card) func(i, j int) bool {
 	return func(i, j int) bool {

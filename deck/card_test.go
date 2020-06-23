@@ -69,3 +69,26 @@ func TestDefaultSort(t *testing.T) {
 	})
 
 }
+
+func TestSort(t *testing.T) {
+	t.Run("test if first card is Ace of Spades", func(t *testing.T) {
+		cards := New(Sort(Less))
+		want := Card{Rank: Ace, Suit: Spade}
+		got := cards[0]
+
+		if got != want {
+			t.Error("Expected Ace of Spades as first card. Got:", got)
+		}
+	})
+
+	t.Run("test if last card is King of Hearts", func(t *testing.T) {
+		cards := New(Sort(Less))
+		want := Card{Rank: King, Suit: Heart}
+		got := cards[len(cards)-1]
+
+		if got != want {
+			t.Error("Expected King of Hearts as last card. Got:", got)
+		}
+	})
+
+}
