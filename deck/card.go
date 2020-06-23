@@ -5,7 +5,9 @@ package deck
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
+	"time"
 )
 
 // Suit represents card's category.
@@ -108,4 +110,27 @@ func Less(cards []Card) func(i, j int) bool {
 // absRank returns absolute rank of a card.
 func absRank(c Card) int {
 	return int(c.Suit)*int(maxRank) + int(c.Rank)
+}
+
+// Shuffle takes a slice of Card and returns shuffled slice of Card
+func Shuffle(cards []Card) []Card {
+	ret := make([]Card, len(cards))
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	perm := r.Perm(len(cards))
+	for idx, randVal := range perm {
+		ret[idx] = cards[randVal]
+	}
+
+	return ret
+}
+
+// Jokers is a functional option to New which takes a number of cards
+// and adds that many Joker to the final deck
+func Jokers(n int) func([]Card) []Card {
+	return func(cards []Card) []Card {
+		for i := 0; i < n; i++ {
+			cards = append(cards, Card{Suit: Joker, Rank: Rank(i)})
+		}
+		return cards
+	}
 }

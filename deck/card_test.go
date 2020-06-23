@@ -2,6 +2,7 @@ package deck
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -91,4 +92,28 @@ func TestSort(t *testing.T) {
 		}
 	})
 
+}
+
+func TestShuffle(t *testing.T) {
+	cards := New(Sort(Less))
+	shuffledCard := Shuffle(cards)
+
+	if reflect.DeepEqual(cards, shuffledCard) {
+		t.Error("Shuffled cards are same as unshuffled cards.")
+	}
+}
+
+func TestJokers(t *testing.T) {
+	noWant := 3
+	cards := New(Jokers(noWant))
+
+	got := 0
+	for _, c := range cards {
+		if c.Suit == Joker {
+			got++
+		}
+	}
+	if got != noWant {
+		t.Errorf("expected %d Jokers, got %d", noWant, got)
+	}
 }
