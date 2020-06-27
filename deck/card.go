@@ -149,3 +149,15 @@ func Filter(f func(card Card) bool) func([]Card) []Card {
 		return ret
 	}
 }
+
+// Deck takes a number of decks to generate,
+// and duplicates existing cards.
+func Deck(n int) func([]Card) []Card {
+	return func(cards []Card) []Card {
+		var ret []Card
+		for i := 0; i < n; i++ {
+			ret = append(ret, cards...)
+		}
+		return ret
+	}
+}
