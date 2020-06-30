@@ -40,3 +40,7 @@ Uses Postgres with <https://github.com/lib/pq>.
 ## Deck of Cards
 
 The `deck` package, which will be used in future card game exercises. Implements Suit, Rank and Card types.
+
+## Blackjack
+
+Using the `deck` module, implements a simple version of the Blackjack game.
