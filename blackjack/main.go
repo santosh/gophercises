@@ -24,6 +24,24 @@ func (h Hand) DealerString() string {
 	return h[0].String() + ", **HIDDEN**"
 }
 
+// Score returns max score, in contrast to MinScore func.
+func (h Hand) Score() int {
+	minScore := h.MinScore()
+	if minScore > 11 {
+		// we can't increase 12 to 22, because that will be a bust
+		return minScore
+	}
+
+	for _, c := range h {
+		if c.Rank == deck.Ace {
+			// ace is currently worth 1, and we are changing it to be worth 11
+			// 11 - 1 = 10
+			return minScore + 10
+		}
+	}
+	return minScore
+}
+
 // MinScore takes A as 1, not 11.
 func (h Hand) MinScore() int {
 	score := 0
@@ -79,6 +97,6 @@ func main() {
 		}
 	}
 	fmt.Println("==FINAL HANDS==")
-	fmt.Println("Player:", player, "\nScore:", player.MinScore())
-	fmt.Println("Dealer:", dealer, "\nScore:", dealer.MinScore())
+	fmt.Println("Player:", player, "\nScore:", player.Score())
+	fmt.Println("Dealer:", dealer, "\nScore:", dealer.Score())
 }
