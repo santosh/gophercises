@@ -19,8 +19,28 @@ func (h Hand) String() string {
 	return strings.Join(strs, ", ")
 }
 
+// DealerString hides the second card
 func (h Hand) DealerString() string {
 	return h[0].String() + ", **HIDDEN**"
+}
+
+// MinScore takes A as 1, not 11.
+func (h Hand) MinScore() int {
+	score := 0
+	for _, c := range h {
+		// because J, Q, K has rank 11, 12, 13..
+		// we'll either add 10 or less than 10
+		score += min(int(c.Rank), 10)
+	}
+	return score
+}
+
+// min is a helper function to MinScore
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // draw fetches a card from deck of cards and returns fetched
@@ -59,6 +79,6 @@ func main() {
 		}
 	}
 	fmt.Println("==FINAL HANDS==")
-	fmt.Println("Player:", player)
-	fmt.Println("Dealer:", dealer)
+	fmt.Println("Player:", player, "\nScore:", player.MinScore())
+	fmt.Println("Dealer:", dealer, "\nScore:", dealer.MinScore())
 }
