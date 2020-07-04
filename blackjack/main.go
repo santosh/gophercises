@@ -120,3 +120,44 @@ func main() {
 		fmt.Println("Draw")
 	}
 }
+
+type State int8
+
+const (
+	StatePlayerTurn State = iota
+	StateDealerTurn
+	StateHandOver
+)
+
+type GameState struct {
+	Deck   []deck.Card
+	State  State
+	Player Hand
+	Dealer Hand
+}
+
+// CurrentPlayer returns player's hand
+func (gs *GameState) CurrentPlayer() *Hand {
+	switch gs.State {
+	case StatePlayerTurn:
+		return &gs.Player
+	case StateDealerTurn:
+		return &gs.Dealer
+	default:
+		panic("It isn't currently any player's turn")
+	}
+}
+
+// clone clones a game state and returns it
+func clone(gs GameState) GameState {
+	ret := GameState{
+		Deck:   make([]deck.Card, len(gs.Deck)),
+		State:  gs.State,
+		Player: make(Hand, len(gs.Player)),
+		Dealer: make(Hand, len(gs.Dealer)),
+	}
+	copy(ret.Deck, gs.Deck)
+	copy(ret.Player, gs.Player)
+	copy(ret.Dealer, gs.Dealer)
+	return ret
+}
