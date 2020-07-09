@@ -1,12 +1,13 @@
 package main
 
 import (
-	"log"
+	"fmt"
 
-	hackerrank "github.com/santosh/gophercises/hr"
+	"github.com/santosh/gophercises/blackjack"
 )
 
 func main() {
-	encrypted := hackerrank.CaesarCipher("santosh kumar", 1)
-	log.Println(encrypted)
+	game := blackjack.New()
+	winnings := game.Play(blackjack.HumanAI())
+	fmt.Println(winnings)
 }
