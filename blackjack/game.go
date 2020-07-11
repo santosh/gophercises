@@ -8,28 +8,56 @@ import (
 
 type state int8
 
+// Options is the main option struct for blackjack.New()
+type Options struct {
+	Decks           int
+	Hands           int
+	BlackjackPayout float64
+}
+
 const (
-	statePlayerTurn state = iota
+	stateBet state = iota
+	statePlayerTurn
 	stateDealerTurn
 	stateHandOver
 )
 
-func New() Game {
-	return Game{
+// New returns a new Game object
+func New(opts Options) Game {
+	g := Game{
 		state:    statePlayerTurn,
 		dealerAI: dealerAI{},
 		balance:  0,
 	}
+
+	if opts.Decks == 0 {
+		opts.Decks = 3
+	}
+	if opts.Hands == 0 {
+		opts.Hands = 100
+	}
+	if opts.BlackjackPayout == 0.0 {
+		opts.BlackjackPayout = 1.5
+	}
+	g.nDecks = opts.Decks
+	g.nHands = opts.Hands
+	g.blackjackPayout = opts.BlackjackPayout
+	return g
 }
 
+// Game object is the core of the application.
+// See methods.
 type Game struct {
 	// unexported fields
-	deck     []deck.Card
-	state    state
-	player   []deck.Card
-	dealer   []deck.Card
-	dealerAI AI
-	balance  int
+	deck            []deck.Card
+	nDecks          int
+	nHands          int
+	state           state
+	player          []deck.Card
+	dealer          []deck.Card
+	dealerAI        AI
+	balance         int
+	blackjackPayout float64
 }
 
 // CurrentHand returns player's hand
@@ -58,12 +86,22 @@ func deal(g *Game) {
 	g.state = statePlayerTurn
 }
 
+// Play is the main event loop of the game.
 func (g *Game) Play(ai AI) int {
-	g.deck = deck.New(deck.Deck(3), deck.Shuffle)
+	g.deck = nil
+	min := 52 * g.nDecks / 3
+
 	// create 3 deck of cards and shuffle it
-	for i := 0; i < 10; i++ {
+	for i := 0; i < g.nHands; i++ {
+		// reshuffle the cards, or its easy to make a guess
+		// when cards are low
+		if len(g.deck) < min {
+			g.deck = deck.New(deck.Deck(g.nDecks), deck.Shuffle)
+		}
+
 		deal(g)
 
+		// if its player turn
 		for g.state == statePlayerTurn {
 			hand := make([]deck.Card, len(g.player))
 			copy(hand, g.player)
@@ -71,6 +109,7 @@ func (g *Game) Play(ai AI) int {
 			move(g)
 		}
 
+		// if its dealer turn
 		for g.state == stateDealerTurn {
 			hand := make([]deck.Card, len(g.dealer))
 			copy(hand, g.dealer)
@@ -82,8 +121,10 @@ func (g *Game) Play(ai AI) int {
 	return g.balance
 }
 
+//
 type Move func(*Game)
 
+// MoveHit draws a card from the deck and append it to hand.
 func MoveHit(g *Game) {
 	hand := g.currentHand()
 	var card deck.Card
@@ -94,6 +135,7 @@ func MoveHit(g *Game) {
 	}
 }
 
+// MoveStand moves the turn to next player.
 func MoveStand(g *Game) {
 	g.state++
 }
