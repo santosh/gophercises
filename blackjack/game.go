@@ -112,7 +112,10 @@ func (g *Game) Play(ai AI) int {
 		shuffled = false
 
 		deal(g)
-
+		if Blackjack(g.dealer...) {
+			endHand(g, ai)
+			continue
+		}
 		// if its player turn
 		for g.state == statePlayerTurn {
 			hand := make([]deck.Card, len(g.player))
@@ -120,7 +123,6 @@ func (g *Game) Play(ai AI) int {
 			move := ai.Play(hand, g.dealer[0])
 			move(g)
 		}
-
 		// if its dealer turn
 		for g.state == stateDealerTurn {
 			hand := make([]deck.Card, len(g.dealer))
@@ -161,19 +163,25 @@ func draw(cards []deck.Card) (deck.Card, []deck.Card) {
 // endHand prints final score with appripriate text
 func endHand(g *Game, ai AI) {
 	pScore, dScore := Score(g.player...), Score(g.dealer...)
+	pBlackjack, dBlackjack := Blackjack(g.player...), Blackjack(g.dealer...)
 	winnings := g.playerBet
 	switch {
+	// if dealer is a blackjack, but you also have a blackjack, it's a draw
+	case dBlackjack && pBlackjack:
+		winnings = 0
+	// no matter what, if dealer has a blackjack, player lose
+	case dBlackjack:
+		winnings *= -1
+	case pBlackjack:
+		winnings *= int(float64(winnings) * g.blackjackPayout)
+		// not sure if there is other way than typecasting
 	case pScore > 21:
-		fmt.Println("You busted!")
 		winnings *= -1
 	case dScore > 21:
-		fmt.Println("Dealer busted!")
-		g.balance++
+		// win
 	case pScore > dScore:
-		fmt.Println("You win!")
-		g.balance++
+		// win
 	case dScore > pScore:
-		fmt.Println("You lose!")
 		winnings *= -1
 	case pScore == dScore:
 		winnings = 0
@@ -208,6 +216,11 @@ func Soft(hand ...deck.Card) bool {
 	minScore := minScore(hand...)
 	score := Score(hand...)
 	return minScore != score
+}
+
+// Blackjack returns true if a hand is a blackjack
+func Blackjack(hand ...deck.Card) bool {
+	return len(hand) == 2 && Score(hand...) == 21
 }
 
 // MinScore takes A as 1, not 11.
