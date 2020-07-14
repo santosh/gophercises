@@ -1,6 +1,7 @@
 package blackjack
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/santosh/gophercises/deck"
@@ -121,7 +122,17 @@ func (g *Game) Play(ai AI) int {
 			hand := make([]deck.Card, len(g.player))
 			copy(hand, g.player)
 			move := ai.Play(hand, g.dealer[0])
-			move(g)
+			err := move(g)
+			switch err {
+			case errBust:
+				MoveStand(g)
+			case nil:
+				// no-op
+			default:
+				panic(err)
+			}
+			if err != nil {
+			}
 		}
 		// if its dealer turn
 		for g.state == stateDealerTurn {
@@ -135,23 +146,40 @@ func (g *Game) Play(ai AI) int {
 	return g.balance
 }
 
+var (
+	errBust = errors.New("hand score exceeded 21")
+)
+
 //
 type Move func(*Game)
 
 // MoveHit draws a card from the deck and append it to hand.
-func MoveHit(g *Game) {
+func MoveHit(g *Game) error {
 	hand := g.currentHand()
 	var card deck.Card
 	card, g.deck = draw(g.deck)
 	*hand = append(*hand, card)
 	if Score(*hand...) > 21 {
-		MoveStand(g)
+		return errBust
 	}
+	return nil
+}
+
+// MoveDouble hit and then stands
+func MoveDouble(g *Game) error {
+	if len(g.player) != 2 {
+		return errors.New("can only double on a hand with 2 cards")
+	}
+	g.playerBet *= 2
+	MoveHit(g)
+	return MoveStand(g)
+
 }
 
 // MoveStand moves the turn to next player.
-func MoveStand(g *Game) {
+func MoveStand(g *Game) error {
 	g.state++
+	return nil
 }
 
 // draw fetches a card from deck of cards and returns fetched
