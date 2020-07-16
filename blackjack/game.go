@@ -2,7 +2,6 @@ package blackjack
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/santosh/gophercises/deck"
 )
@@ -56,7 +55,8 @@ type Game struct {
 	state state
 	deck  []deck.Card
 
-	player    []deck.Card
+	player    []hand
+	handIdx   int
 	playerBet int
 	balance   int
 
@@ -68,12 +68,17 @@ type Game struct {
 func (g *Game) currentHand() *[]deck.Card {
 	switch g.state {
 	case statePlayerTurn:
-		return &g.player
+		return &g.player[g.handIdx].cards
 	case stateDealerTurn:
 		return &g.dealer
 	default:
 		panic("It isn't currently any player's turn")
 	}
+}
+
+type hand struct {
+	cards []deck.Card
+	bet   int
 }
 
 func bet(g *Game, ai AI, shuffled bool) {
@@ -83,14 +88,20 @@ func bet(g *Game, ai AI, shuffled bool) {
 
 // deal deals Hand to the Player and Dealer
 func deal(g *Game) {
-	g.player = make([]deck.Card, 0, 5)
+	playerHand := make([]deck.Card, 0, 5)
 	g.dealer = make([]deck.Card, 0, 5)
 	var card deck.Card
 	for i := 0; i < 2; i++ {
 		card, g.deck = draw(g.deck)
-		g.player = append(g.player, card)
+		playerHand = append(playerHand, card)
 		card, g.deck = draw(g.deck)
 		g.dealer = append(g.dealer, card)
+	}
+	g.player = []hand{
+		{
+			cards: playerHand,
+			bet:   g.playerBet,
+		},
 	}
 	g.state = statePlayerTurn
 }
@@ -114,13 +125,13 @@ func (g *Game) Play(ai AI) int {
 
 		deal(g)
 		if Blackjack(g.dealer...) {
-			endHand(g, ai)
+			endRound(g, ai)
 			continue
 		}
 		// if its player turn
 		for g.state == statePlayerTurn {
-			hand := make([]deck.Card, len(g.player))
-			copy(hand, g.player)
+			hand := make([]deck.Card, len(*g.currentHand()))
+			copy(hand, *g.currentHand())
 			move := ai.Play(hand, g.dealer[0])
 			err := move(g)
 			switch err {
@@ -141,7 +152,7 @@ func (g *Game) Play(ai AI) int {
 			move := g.dealerAI.Play(hand, g.dealer[0])
 			move(g)
 		}
-		endHand(g, ai)
+		endRound(g, ai)
 	}
 	return g.balance
 }
@@ -165,6 +176,23 @@ func MoveHit(g *Game) error {
 	return nil
 }
 
+// MoveSplit
+func MoveSplit(g *Game) error {
+	cards := g.currentHand()
+	if len(*cards) != 2 {
+		return errors.New("you can only split with two cards in your cards")
+	}
+	if (*cards)[0].Rank != (*cards)[1].Rank {
+		return errors.New("both cards must have the same rank to split")
+	}
+	g.player = append(g.player, hand{
+		cards: []deck.Card{(*cards)[1]},
+		bet:   g.player[g.handIdx].bet,
+	})
+	g.player[g.handIdx].cards = (*cards)[:1]
+	return nil
+}
+
 // MoveDouble hit and then stands
 func MoveDouble(g *Game) error {
 	if len(g.player) != 2 {
@@ -178,8 +206,18 @@ func MoveDouble(g *Game) error {
 
 // MoveStand moves the turn to next player.
 func MoveStand(g *Game) error {
-	g.state++
-	return nil
+	if g.state == stateDealerTurn {
+		g.state++
+		return nil
+	}
+	if g.state == statePlayerTurn {
+		g.handIdx++
+		if g.handIdx >= len(g.player) {
+			g.state++
+		}
+		return nil
+	}
+	return errors.New("invalid state")
 }
 
 // draw fetches a card from deck of cards and returns fetched
@@ -188,35 +226,41 @@ func draw(cards []deck.Card) (deck.Card, []deck.Card) {
 	return cards[0], cards[1:]
 }
 
-// endHand prints final score with appripriate text
-func endHand(g *Game, ai AI) {
-	pScore, dScore := Score(g.player...), Score(g.dealer...)
-	pBlackjack, dBlackjack := Blackjack(g.player...), Blackjack(g.dealer...)
-	winnings := g.playerBet
-	switch {
-	// if dealer is a blackjack, but you also have a blackjack, it's a draw
-	case dBlackjack && pBlackjack:
-		winnings = 0
-	// no matter what, if dealer has a blackjack, player lose
-	case dBlackjack:
-		winnings *= -1
-	case pBlackjack:
-		winnings *= int(float64(winnings) * g.blackjackPayout)
-		// not sure if there is other way than typecasting
-	case pScore > 21:
-		winnings *= -1
-	case dScore > 21:
-		// win
-	case pScore > dScore:
-		// win
-	case dScore > pScore:
-		winnings *= -1
-	case pScore == dScore:
-		winnings = 0
+// endRound prints final score with appripriate text
+func endRound(g *Game, ai AI) {
+	dScore := Score(g.dealer...)
+	dBlackjack := Blackjack(g.dealer...)
+	allHands := make([][]deck.Card, len(g.player))
+
+	for hi, hand := range g.player {
+		allHands[hi] = hand.cards
+		cards := hand.cards
+		pScore, pBlackjack := Score(cards...), Blackjack(cards...)
+		winnings := hand.bet
+		switch {
+		// if dealer is a blackjack, but you also have a blackjack, it's a draw
+		case dBlackjack && pBlackjack:
+			winnings = 0
+		// no matter what, if dealer has a blackjack, player lose
+		case dBlackjack:
+			winnings *= -1
+		case pBlackjack:
+			winnings *= int(float64(winnings) * g.blackjackPayout)
+			// not sure if there is other way than typecasting
+		case pScore > 21:
+			winnings *= -1
+		case dScore > 21:
+			// win
+		case pScore > dScore:
+			// win
+		case dScore > pScore:
+			winnings *= -1
+		case pScore == dScore:
+			winnings = 0
+		}
+		g.balance += winnings
 	}
-	g.balance += winnings
-	fmt.Println()
-	ai.Summary([][]deck.Card{g.player}, g.dealer)
+	ai.Summary(allHands, g.dealer)
 	g.player = nil
 	g.dealer = nil
 }
