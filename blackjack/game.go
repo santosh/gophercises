@@ -125,8 +125,6 @@ func (g *Game) Play(ai AI) int {
 			shuffled = true
 		}
 		bet(g, ai, shuffled)
-		shuffled = false
-
 		deal(g)
 		if Blackjack(g.dealer...) {
 			endRound(g, ai)
@@ -146,8 +144,6 @@ func (g *Game) Play(ai AI) int {
 			default:
 				panic(err)
 			}
-			if err != nil {
-			}
 		}
 		// if its dealer turn
 		for g.state == stateDealerTurn {
@@ -166,7 +162,7 @@ var (
 )
 
 //
-type Move func(*Game)
+type Move func(*Game) error
 
 // MoveHit draws a card from the deck and append it to hand.
 func MoveHit(g *Game) error {
