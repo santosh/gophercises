@@ -44,3 +44,7 @@ The `deck` package, which will be used in future card game exercises. Implements
 ## Blackjack
 
 Using the `deck` module, implements a simple version of the Blackjack game.
+
+## File Renaming Tool
+
+A tool used to rename files with a common pattern. Eg we might want to take many files with names like “Dog (1 of 100).jpg”, “Dog (2 of 100).jpg”, … and rename them to “Dog_001.jpg”, “Dog_002.jpg”, …
