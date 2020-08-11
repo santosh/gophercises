@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -59,38 +60,50 @@ func getTopStories(numStories int) ([]item, error) {
 	if err != nil {
 		return nil, errors.New("Failed to load top stories")
 	}
-	var stories []item
-	for _, id := range ids {
-		// we need something to come out of goroutine,
-		// it will be this struct
-		type result struct {
-			item item
-			err  error
-		}
-		resultCh := make(chan result)
+	// we need something to come out of goroutine,
+	// it will be this struct
+	type result struct {
+		idx  int
+		item item
+		err  error
+	}
+	resultCh := make(chan result)
 
-		// pass to the goroutine error, or the item
-		go func(id int) {
+	for i := 0; i < numStories; i++ {
+		// pass into to the goroutine error or the item
+		go func(idx, id int) {
 			hnItem, err := client.GetItem(id)
 			if err != nil {
-				resultCh <- result{err: err}
+				resultCh <- result{idx: idx, err: err}
 			}
-			resultCh <- result{item: parseHNItem(hnItem)}
-		}(id)
+			resultCh <- result{idx: idx, item: parseHNItem(hnItem)}
+		}(i, ids[i])
+	}
 
-		// block until something is written on resultCh
-		res := <-resultCh
+	var results []result
+
+	for i := 0; i < numStories; i++ {
+		results = append(results, <-resultCh)
+	}
+
+	// now sort the slice as there is no gurantee all goroutines
+	// would have returned in same order they were executed
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].idx < results[j].idx
+	})
+
+	// separate faulty items and pass healthy one to the caller
+	var stories []item
+	for _, res := range results {
 		if res.err != nil {
 			continue
 		}
-
+		// only the story type is considered
 		if isStoryLink(res.item) {
 			stories = append(stories, res.item)
-			if len(stories) >= numStories {
-				break
-			}
 		}
 	}
+
 	return stories, nil
 }
 
@@ -99,6 +112,8 @@ func isStoryLink(item item) bool {
 	return item.Type == "story" && item.URL != ""
 }
 
+// parseHNItem parses a "Item" resource from hackernews and
+// returns a local "Item" with "www." trimmed.
 func parseHNItem(hnItem hn.Item) item {
 	ret := item{Item: hnItem}
 	url, err := url.Parse(ret.URL)
@@ -114,6 +129,7 @@ type item struct {
 	Host string
 }
 
+// templateData data structure is sent to template to populate the page
 type templateData struct {
 	Stories []item
 	Time    time.Duration
