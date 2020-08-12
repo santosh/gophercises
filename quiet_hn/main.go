@@ -54,12 +54,27 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 	})
 }
 
+// getTopStories spawns a goroutine to fetch every items for
+// given id
 func getTopStories(numStories int) ([]item, error) {
 	var client hn.Client
 	ids, err := client.TopItems()
 	if err != nil {
 		return nil, errors.New("Failed to load top stories")
 	}
+	var stories []item
+	at := 0
+	// keep running until we have numStories amount of stories
+	for len(stories) < numStories {
+		need := (numStories - len(stories)) * 5 / 4
+		stories = append(stories, getStories(ids[at:at+need])...)
+		at += need
+	}
+	// return wanted stories only
+	return stories[:numStories], nil
+}
+
+func getStories(ids []int) []item {
 	// we need something to come out of goroutine,
 	// it will be this struct
 	type result struct {
@@ -69,7 +84,8 @@ func getTopStories(numStories int) ([]item, error) {
 	}
 	resultCh := make(chan result)
 
-	for i := 0; i < numStories; i++ {
+	for i := 0; i < len(ids); i++ {
+		var client hn.Client
 		// pass into to the goroutine error or the item
 		go func(idx, id int) {
 			hnItem, err := client.GetItem(id)
@@ -82,7 +98,7 @@ func getTopStories(numStories int) ([]item, error) {
 
 	var results []result
 
-	for i := 0; i < numStories; i++ {
+	for i := 0; i < len(ids); i++ {
 		results = append(results, <-resultCh)
 	}
 
@@ -103,8 +119,7 @@ func getTopStories(numStories int) ([]item, error) {
 			stories = append(stories, res.item)
 		}
 	}
-
-	return stories, nil
+	return stories
 }
 
 // isStoryLink is used to filter out posts other than 'story' type
