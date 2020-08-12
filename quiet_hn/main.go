@@ -10,9 +10,16 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/santosh/gophercises/quiet_hn/hn"
+)
+
+var (
+	cache           []item
+	cacheExpiration time.Time
+	cacheMutex      sync.Mutex
 )
 
 func main() {
@@ -31,9 +38,31 @@ func main() {
 }
 
 func handler(numStories int, tpl *template.Template) http.HandlerFunc {
+	sc := storyCache{
+		numStories: numStories,
+		duration:   6 * time.Second,
+	}
+
+	go func() {
+		ticker := time.NewTicker(3 * time.Second)
+		for {
+			temp := storyCache{
+				numStories: numStories,
+				duration:   6 * time.Second,
+			}
+
+			temp.stories()
+			sc.mutex.Lock()
+			sc.cache = temp.cache
+			sc.expiration = temp.expiration
+			sc.mutex.Unlock()
+			<-ticker.C
+		}
+	}()
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		stories, err := getCachedStories(numStories)
+		stories, err := sc.stories()
 		if err != nil {
 			// it is essential to keep in mind what kind of information are
 			// being split outside our application. You probably don't want
@@ -54,23 +83,30 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 	})
 }
 
-var (
-	cache           []item
-	cacheExpiration time.Time
-)
+type storyCache struct {
+	numStories int
+	cache      []item
+	useA       bool
+	expiration time.Time
+	duration   time.Duration
+	mutex      sync.Mutex
+}
 
-func getCachedStories(numStories int) ([]item, error) {
+func (sc *storyCache) stories() ([]item, error) {
+	sc.mutex.Lock()
+	defer sc.mutex.Unlock()
+
 	// if cache is not expired
-	if time.Now().Sub(cacheExpiration) < 0 {
-		return cache, nil
+	if time.Now().Sub(sc.expiration) < 0 {
+		return sc.cache, nil
 	}
-	stories, err := getTopStories(numStories)
+	stories, err := getTopStories(sc.numStories)
 	if err != nil {
 		return nil, err
 	}
-	cache = stories
-	cacheExpiration = time.Now().Add(1 * time.Millisecond)
-	return cache, nil
+	sc.expiration = time.Now().Add(sc.duration)
+	sc.cache = stories
+	return sc.cache, nil
 }
 
 // getTopStories spawns a goroutine to fetch every items for
