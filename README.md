@@ -52,3 +52,16 @@ A tool used to rename files with a common pattern. Eg we might want to take many
 ## Quite Hacker News
 
 Take <https://github.com/tomspeak/quiet-hacker-news>, and make it fast by adding caching and concurrency.
+
+## Recover Middleware
+
+HTTP middleware that recovers from panic in an application.
+
+## Recover Middleware w/ Source Code
+
+Expand upon the recover middleware and add links to source code along with syntax highlighting of the source code in order to make a useful development tool.
+
+## Twitter Highlight Contest CLI
+
+Create a CLI to help run a Twitter contest where users retweet a tweet for entry, and after some time you pick one or more of the users who retweeted as the winner.
+
