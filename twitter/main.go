@@ -6,23 +6,27 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/oauth2"
 )
 
 var (
-	keyFile   string
-	usersFile string
-	tweetID   string
+	keyFile    string
+	usersFile  string
+	tweetID    string
+	numWinners int
 )
 
 func init() {
 	flag.StringVar(&keyFile, "key", ".keys.json", "credential files")
 	flag.StringVar(&usersFile, "users", "users.csv", "file where users have retweeted the tweet are stored.")
 	flag.StringVar(&tweetID, "tweet", "991053593250758658", "The ID of the tweet you want retweeters of.")
+	flag.IntVar(&numWinners, "winners", 0, "The number of winners to pick for the contest.")
 	flag.Parse()
 }
 
@@ -45,6 +49,15 @@ func main() {
 	err = writeUsers(usersFile, allUsernames)
 	if err != nil {
 		panic(err)
+	}
+	if numWinners == 0 {
+		return
+	}
+	existingUsername = existing(usersFile)
+	winners := pickWinners(existingUsername, numWinners)
+	fmt.Println("The winners are:")
+	for _, username := range winners {
+		fmt.Printf("\t%s\n", username)
 	}
 }
 
@@ -164,4 +177,16 @@ func writeUsers(usersFile string, users []string) error {
 		return err
 	}
 	return nil
+}
+
+func pickWinners(users []string, numWinners int) []string {
+	existingUsername := existing(usersFile)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	perm := r.Perm(len(existingUsername))
+	winners := perm[:numWinners]
+	var ret []string
+	for _, idx := range winners {
+		ret = append(ret, users[idx])
+	}
+	return ret
 }
