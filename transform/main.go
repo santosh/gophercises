@@ -1,11 +1,15 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/santosh/gophercises/transform/primitive"
 )
@@ -30,22 +34,57 @@ func main() {
 		defer file.Close()
 
 		ext := filepath.Ext(header.Filename)[1:]
-		out, err := primitive.Transform(file, ext, 50, primitive.WithMode(primitive.ModeTriangle))
+		a, err := genImage(file, ext, 33, primitive.ModeCircle)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		switch ext {
-		case "jpg":
-			fallthrough
-		case "jpeg":
-			w.Header().Set("Content-Type", "image/jpeg")
-		case "png":
-			w.Header().Set("Content-Type", "image/png")
-		default:
-			http.Error(w, "Invalid image type", http.StatusBadRequest)
-			return
+		file.Seek(0, 0)
+		b, err := genImage(file, ext, 33, primitive.ModeEllipse)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		io.Copy(w, out)
+		file.Seek(0, 0)
+		c, err := genImage(file, ext, 33, primitive.ModePolygon)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		file.Seek(0, 0)
+		d, err := genImage(file, ext, 33, primitive.ModeCombo)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		html := `<html><body>
+		{{range .}}
+			<img src="/{{.}}">
+		{{end}}
+		</body></html>`
+		tpl := template.Must(template.New("").Parse(html))
+		tpl.Execute(w, []string{a, b, c, d})
 	})
+	fs := http.FileServer(http.Dir("./img/"))
+	mux.Handle("/img/", http.StripPrefix("/img", fs))
 	log.Fatal(http.ListenAndServe(":3000", mux))
+}
+
+func tempfile(prefix, ext string) (*os.File, error) {
+	in, err := ioutil.TempFile("./img", prefix)
+	if err != nil {
+		return nil, errors.New("main: failed to create temporary input file")
+	}
+	defer os.Remove(in.Name())
+	return os.Create(fmt.Sprintf("%s.%s", in.Name(), ext))
+}
+
+func genImage(file io.Reader, ext string, numShapes int, mode primitive.Mode) (string, error) {
+	out, err := primitive.Transform(file, ext, 50, primitive.WithMode(mode))
+	if err != nil {
+		return "", err
+	}
+	outFile, err := tempfile("", ext)
+	if err != nil {
+		return "", err
+	}
+	defer outFile.Close()
+	io.Copy(outFile, out)
+	return outFile.Name(), nil
 }
