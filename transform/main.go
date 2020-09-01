@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"text/template"
 
 	"github.com/santosh/gophercises/transform/primitive"
 )
@@ -25,6 +24,16 @@ func main() {
 		</body></html>`
 		fmt.Fprint(w, html)
 	})
+	mux.HandleFunc("/modify/", func(w http.ResponseWriter, r *http.Request) {
+		f, err := os.Open("./img/" + filepath.Base(r.URL.Path))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		defer f.Close()
+		w.Header().Set("Content-Type", "image/png")
+		io.Copy(w, f)
+	})
 	mux.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
 		file, header, err := r.FormFile("image")
 		if err != nil {
@@ -32,34 +41,17 @@ func main() {
 			return
 		}
 		defer file.Close()
-
 		ext := filepath.Ext(header.Filename)[1:]
-		a, err := genImage(file, ext, 33, primitive.ModeCircle)
+		onDisk, err := tempfile("", ext)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		}
-		file.Seek(0, 0)
-		b, err := genImage(file, ext, 33, primitive.ModeEllipse)
+		_, err = io.Copy(onDisk, file)
+		defer onDisk.Close()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		}
-		file.Seek(0, 0)
-		c, err := genImage(file, ext, 33, primitive.ModePolygon)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		file.Seek(0, 0)
-		d, err := genImage(file, ext, 33, primitive.ModeCombo)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		html := `<html><body>
-		{{range .}}
-			<img src="/{{.}}">
-		{{end}}
-		</body></html>`
-		tpl := template.Must(template.New("").Parse(html))
-		tpl.Execute(w, []string{a, b, c, d})
+		http.Redirect(w, r, "/modify/"+filepath.Base(onDisk.Name()), http.StatusFound)
 	})
 	fs := http.FileServer(http.Dir("./img/"))
 	mux.Handle("/img/", http.StripPrefix("/img", fs))
