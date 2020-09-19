@@ -19,7 +19,7 @@ var (
 
 func init() {
 	parser := argparse.NewParser("cyoaweb", "Web version of The Little Blue Gopher. A choose your own adventure type game.")
-	fileFlag = parser.String("f", "file", &argparse.Options{Required: true, Help: "File to use for story. See README.md for format."})
+	fileFlag = parser.String("f", "file", &argparse.Options{Required: true, Help: "File to use for story."})
 	portFlag = parser.Int("p", "port", &argparse.Options{Required: false, Help: "Port to start the CYOA webapp on."})
 
 	err := parser.Parse(os.Args)
