@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/akamensky/argparse"
 	"github.com/boltdb/bolt"
+	"github.com/santosh/gophercises/urlshort/handlers"
 )
 
 func getYAMLContent(fp string) (yamlContent []byte) {
@@ -57,38 +57,45 @@ func main() {
 	pathsToUrls := map[string]string{
 		"/urlshort-godoc": "https://godoc.org/github.com/gophercises/urlshort",
 		"/yaml-godoc":     "https://godoc.org/gopkg.in/yaml.v2",
-		"/ghme":           "https://github.com/santosh",
+		"/gh":             "https://github.com/santosh",
 	}
-	mapHandler := MapHandler(pathsToUrls, mux)
+
+	mapHandler := handlers.MapHandler(pathsToUrls, mux)
 
 	yamlContent := getYAMLContent(*yamlFlag)
 
 	// Build the YAMLHandler using the mapHandler as the
 	// fallback
-	yamlHandler, err := YAMLHandler([]byte(yamlContent), mapHandler)
+	yamlHandler, err := handlers.YAMLHandler([]byte(yamlContent), mapHandler)
 	if err != nil {
 		panic(err)
 	}
 
 	jsonContent := getJSONContent(*jsonFlag)
 
-	jsonHandler, err := JSONHandler([]byte(jsonContent), yamlHandler)
+	// Build the JSONHandler using the yamlHandler as the fallback
+	jsonHandler, err := handlers.JSONHandler([]byte(jsonContent), yamlHandler)
 	if err != nil {
 		panic(err)
+	}
+
+	if *boltFlag == "" {
+		*boltFlag = "urls.db"
 	}
 
 	db, err := bolt.Open(*boltFlag, 0644, nil)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Starting the server without BoltDB backend on http://localhost:8080")
+		http.ListenAndServe(":8080", jsonHandler)
 	}
 	defer db.Close()
 
-	boltHandler := BoltHandler(db, jsonHandler)
+	boltHandler := handlers.BoltHandler(db, jsonHandler)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Starting the server on http://localhost:8080")
+	fmt.Println("Starting the server with BoltDB backend on http://localhost:8080")
 	http.ListenAndServe(":8080", boltHandler)
 }
 

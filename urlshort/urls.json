@@ -1,10 +1,10 @@
 [
     {
-        "path": "/example",
-        "url": "https://www.example.com"
+        "path": "/tw",
+        "url": "https://twitter.com/sntshk"
     },
     {
-        "path": "/json",
-        "url": "https://en.wikipedia.org/wiki/JSON"
+        "path": "/site",
+        "url": "https://santoshk.dev"
     }
 ]

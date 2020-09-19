@@ -7,18 +7,19 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// Remain mmain to main if you're running it.
-func mmain() {
+// Change this to 'main' while generating bolt.db files. This also means you'll heave
+// Change back to something else e.g. 'mmain' when running the main.
+func main() {
 	var redirects = []byte("redirects")
-	db, err := bolt.Open("bolt.db", 0644, nil)
+	db, err := bolt.Open("urls.db", 0644, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	pathsToUrls := map[string]string{
-		"/some": "https://stackoverflow.com/u/939986/",
-		"/lime": "https://www.linkedin.com/in/sntshk",
+		"/so": "https://stackoverflow.com/u/939986/",
+		"/li": "https://www.linkedin.com/in/sntshk",
 	}
 
 	// store some data
