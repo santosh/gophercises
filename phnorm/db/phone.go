@@ -54,6 +54,7 @@ func (db *DB) Seed() error {
 	return nil
 }
 
+// FindPhone takes a number and returns a pointer to a Phone
 func (db *DB) FindPhone(number string) (*Phone, error) {
 	var p Phone
 	row := db.db.QueryRow("SELECT * FROM phone_numbers WHERE value=$1", number)
@@ -69,12 +70,14 @@ func (db *DB) FindPhone(number string) (*Phone, error) {
 	return &p, nil
 }
 
+// UpdatePhone takes a pointer to a Phone and upadates that to the database.
 func (db *DB) UpdatePhone(p *Phone) error {
 	statement := `UPDATE phone_numbers SET value=$2 WHERE id=$1`
 	_, err := db.db.Exec(statement, p.ID, p.Number)
 	return err
 }
 
+// DeletePhone removes a phone number by it's ID.
 func (db *DB) DeletePhone(id int) error {
 	statement := `DELETE FROM phone_numbers WHERE id=$1`
 	_, err := db.db.Exec(statement, id)
@@ -91,6 +94,7 @@ func insertPhone(db *sql.DB, phone string) (int, error) {
 	return id, nil
 }
 
+// AllPhones returns a slice of all entries in phone_numbers table.
 func (db *DB) AllPhones() ([]Phone, error) {
 	return getAllPhones(db.db)
 }
