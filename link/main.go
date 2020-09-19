@@ -1,4 +1,4 @@
-package link
+package main
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ type Link struct {
 	Text string
 }
 
-// Parse will take in an HTML document and will resutn
+// Parse will take in an HTML document and will return
 // a slice of links parsed from it.
 func Parse(r io.Reader) ([]Link, error) {
 	doc, err := html.Parse(r)
@@ -75,15 +75,15 @@ func exit(msg string) {
 	os.Exit(1)
 }
 
-// func main() {
-// 	data, err := os.Open("ex4.html")
-// 	if err != nil {
-// 		exit("Error opening the html file.")
-// 	}
+func main() {
+	data, err := os.Open(os.Args[1])
+	if err != nil {
+		exit("Error opening the html file.")
+	}
 
-// 	doc, err := Parse(data)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	fmt.Println(doc)
-// }
+	doc, err := Parse(data)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(doc)
+}

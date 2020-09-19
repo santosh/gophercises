@@ -1,10 +1,8 @@
 # HTML Link Parser
 
-https://github.com/gophercises/link
+For each extracted link this program returns a data structure `Link` which includes both the `href`, as well as the text inside the link. Any HTML inside of the link is stripped out, along with any extra whitespace including newlines, back-to-back spaces, etc.
 
-For each extracted link you should return a data structure that includes both the `href`, as well as the text inside the link. Any HTML inside of the link can be stripped out, along with any extra whitespace including newlines, back-to-back spaces, etc.
-
-Links will be nested in different HTML elements, and it is very possible that you will have to deal with HTML silimar to code below.
+Links will be nested in different HTML elements, and it is very possible that you will have to deal with HTML similar to code below.
 
 ```html
 <a href="/dog">
@@ -22,3 +20,11 @@ Link{
   Text: "Something in a span Text not in a span Bold text!",
 }
 ```
+
+## Usage
+
+    go run main.go <filename>
+
+Response would be something like this:
+
+    [{/other-page A link to another page} {/second-page A link to second page}]
