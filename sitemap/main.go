@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/akamensky/argparse"
-	"github.com/santosh/gophercises/link"
+	link "github.com/santosh/gophercises/link"
 )
 
 var siteFlag *string
@@ -130,7 +130,6 @@ func filter(base string, links []string) []string {
 	return ret
 }
 
-// TODO: Parse concurrently for efficiency.
 func hrefs(r io.Reader, base string) []string {
 	links, _ := link.Parse(r) // search for links
 
