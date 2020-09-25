@@ -50,4 +50,4 @@ First two links are in generated from urls.db.
 
 Here is the demo of the entire thing working together.
 
-![Quiz Game Gameply](./urlshort.gif "URL Shortner Backend")
+![URL Shortner Backend](./urlshort.gif "URL Shortner Backend")
