@@ -1,4 +1,4 @@
-package main
+package link
 
 import (
 	"fmt"
@@ -31,6 +31,7 @@ func Parse(r io.Reader) ([]Link, error) {
 	return links, nil
 }
 
+// buildLink takes a node and returns a Link struct
 func buildLink(n *html.Node) Link {
 	var ret Link
 	for _, attr := range n.Attr {
@@ -43,6 +44,7 @@ func buildLink(n *html.Node) Link {
 	return ret
 }
 
+// text pulls text from given node
 func text(n *html.Node) string {
 	if n.Type == html.TextNode {
 		return n.Data
@@ -75,15 +77,16 @@ func exit(msg string) {
 	os.Exit(1)
 }
 
-func main() {
-	data, err := os.Open(os.Args[1])
-	if err != nil {
-		exit("Error opening the html file.")
-	}
+// Main is disabled here, see next lesson in the queue.
+// func main() {
+// 	data, err := os.Open(os.Args[1])
+// 	if err != nil {
+// 		exit("Error opening the html file.")
+// 	}
 
-	doc, err := Parse(data)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(doc)
-}
+// 	doc, err := Parse(data)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	fmt.Println(doc)
+// }
