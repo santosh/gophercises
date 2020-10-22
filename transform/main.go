@@ -101,7 +101,6 @@ func renderNumShapeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSee
 	}
 	imgs, err := genImages(rs, ext, opts...)
 	if err != nil {
-		panic(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -135,14 +134,13 @@ func renderNumShapeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSee
 
 func renderModeChoices(w http.ResponseWriter, r *http.Request, rs io.ReadSeeker, ext string) {
 	opts := []genOpts{
-		{N: 10, M: primitive.ModeCircle},
-		{N: 10, M: primitive.ModeBeziers},
-		{N: 10, M: primitive.ModePolygon},
-		{N: 10, M: primitive.ModeCombo},
+		{N: 50, M: primitive.ModeCircle},
+		{N: 50, M: primitive.ModeBeziers},
+		{N: 50, M: primitive.ModePolygon},
+		{N: 50, M: primitive.ModeCombo},
 	}
 	imgs, err := genImages(rs, ext, opts...)
 	if err != nil {
-		panic(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
