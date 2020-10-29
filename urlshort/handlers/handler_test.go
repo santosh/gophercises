@@ -1,16 +1,20 @@
-package main
+package handlers_test
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/santosh/gophercises/urlshort/handlers"
 )
 
-var expectedPairs = []Pair{
-	Pair{
+var expectedPairs = []handlers.Pair{
+	handlers.Pair{
 		Path: "/yaml",
 		URL:  "https://en.wikipedia.org/wiki/YAML",
 	},
-	Pair{
+	handlers.Pair{
 		Path: "/json",
 		URL:  "https://en.wikipedia.org/wiki/JSON",
 	},
@@ -29,7 +33,7 @@ func TestParseYAML(t *testing.T) {
   - path: /json
     url: https://en.wikipedia.org/wiki/JSON`)
 
-	parsedYAML, err := parseYAML(yamlContent)
+	parsedYAML, err := handlers.ParseYAML(yamlContent)
 
 	if err != nil {
 		panic(err)
@@ -39,6 +43,29 @@ func TestParseYAML(t *testing.T) {
 		t.Errorf("Wrong YAML Parsing.")
 	}
 
+}
+
+func TestMapHandler(t *testing.T) {
+	pathsToURLs := map[string]string{
+		"/gh": "https://github.com/santosh",
+	}
+
+	t.Run("test with path available", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/gh", nil)
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(handlers.MapHandler(pathsToURLs, nil))
+
+		handler.ServeHTTP(rr, req)
+
+		// Check if status code represent a redirection
+		if status := rr.Code; status != http.StatusFound {
+			t.Errorf("handler showig wrong status code: get %v want %v", status, http.StatusFound)
+		}
+	})
+	t.Run("test with path unavailable", func(t *testing.T) {
+
+	})
 }
 
 // Test for parseJSON - Should load JSON data
@@ -54,7 +81,7 @@ func TestParseJSON(t *testing.T) {
     }
 ]`)
 
-	parsedJSON, err := parseJSON(jsonContent)
+	parsedJSON, err := handlers.ParseJSON(jsonContent)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +93,7 @@ func TestParseJSON(t *testing.T) {
 
 // Test for buildMap - should return path map (which MapHandler accepts) from yaml data
 func TestBuildMap(t *testing.T) {
-	pathsToUrls := buidMap(expectedPairs)
+	pathsToUrls := handlers.BuildMap(expectedPairs)
 
 	if !reflect.DeepEqual(pathsToUrls, expectedMap) {
 		t.Errorf("Problem during map generation.")

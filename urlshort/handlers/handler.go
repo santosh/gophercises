@@ -32,7 +32,9 @@ type Pair struct {
 	URL  string `yaml:"url" json:"url"`
 }
 
-func buidMap(pairs []Pair) map[string]string {
+// BuildMap takes in a slice of Pair and returns a map of
+// path and URL.
+func BuildMap(pairs []Pair) map[string]string {
 	pathsToUrls := make(map[string]string)
 	for _, entry := range pairs {
 		pathsToUrls[entry.Path] = entry.URL
@@ -40,7 +42,10 @@ func buidMap(pairs []Pair) map[string]string {
 	return pathsToUrls
 }
 
-func parseYAML(yamlBytes []byte) ([]Pair, error) {
+// ParseYAML takes in yaml byte stream and tries
+// to unmarshal to Pair. Later to be converted using
+// BuildMap.
+func ParseYAML(yamlBytes []byte) ([]Pair, error) {
 	var pairs []Pair
 
 	err := yaml.Unmarshal(yamlBytes, &pairs)
@@ -67,16 +72,16 @@ func parseYAML(yamlBytes []byte) ([]Pair, error) {
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yamlBytes []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	parsedYAML, err := parseYAML(yamlBytes)
+	parsedYAML, err := ParseYAML(yamlBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	pathsToUrls := buidMap(parsedYAML)
+	pathsToUrls := BuildMap(parsedYAML)
 	return MapHandler(pathsToUrls, fallback), nil
 }
 
-func parseJSON(jsonBytes []byte) ([]Pair, error) {
+func ParseJSON(jsonBytes []byte) ([]Pair, error) {
 	var pairs []Pair
 
 	err := json.Unmarshal(jsonBytes, &pairs)
@@ -105,11 +110,11 @@ func parseJSON(jsonBytes []byte) ([]Pair, error) {
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func JSONHandler(jsonBytes []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	parsedJSON, err := parseJSON(jsonBytes)
+	parsedJSON, err := ParseJSON(jsonBytes)
 	if err != nil {
 		return nil, err
 	}
-	pathsToUrls := buidMap(parsedJSON)
+	pathsToUrls := BuildMap(parsedJSON)
 
 	return MapHandler(pathsToUrls, fallback), nil
 }
